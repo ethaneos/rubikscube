@@ -1,5 +1,6 @@
 from vpython import *
 sizeOfPart = 1
+
 colour = {
     "white": vec(1,1,1),
     "red": vec(1,0,0),
@@ -22,6 +23,16 @@ def createPart(location, colours):
     side3 = box(pos=vec(displacement[0], displacement[1]+sizeOfPart/2, displacement[2]), length=sizeOfPart, height=sizeOfPart/50, width=sizeOfPart, color=colour[colours["t"]])
     side4 = box(pos=vec(displacement[0], displacement[1]-sizeOfPart/2, displacement[2]), length=sizeOfPart, height=sizeOfPart/50, width=sizeOfPart, color=colour[colours["b"]])
     return [side1, side2, side3, side4, side5, side6]
+
+class Part:
+    def __init__(self, location: list, colours: str):
+        self.init_loc = location
+        self.colours = colours
+        self.self = compound(createPart())
+
+    def rotate(self, rotation: list):
+        pass
+
 
 right = compound(createPart(
     [1,0,0],
@@ -63,4 +74,52 @@ frontright = compound(createPart(
     "t": "cyan",
     "b": "magenta"
 }))
-input("enter something to close")
+
+def createSide(partLoc, sideLoc, colour):
+    side = box(pos=vec(partLoc[0]+sizeOfPart*sideLoc[1]/2, partLoc[1]+sizeOfPart*sideLoc[1]/2, partLoc[2]+sizeOfPart*sideLoc[2]/2), 
+               length=sizeOfPart/(50*abs(sideLoc[0])), height=sizeOfPart/(50*abs(sideLoc[1])), width=sizeOfPart/(50*abs(sideLoc[2])), 
+               color=colour[colour["f"]])
+
+def initialisePart(location):
+    for i in range(len(location)):
+        pass
+
+if __name__ == "__main__":
+    cubeTop = {
+        (-1,1,-1):"yellow", (0,1,-1):"yellow", (1,1,-1):"yellow",
+        (-1,1,0): "yellow", (0,1,0): "yellow", (1,1,0): "yellow",
+        (-1,1,1): "yellow", (0,1,1): "yellow", (1,1,1): "yellow"
+    }
+    cubeLeft = {
+        (-1,1,-1): "orange", (-1,1,0): "orange", (-1,1,1): "orange",
+        (-1,0,-1): "orange", (-1,0,0): "orange", (-1,0,1): "orange",
+        (-1,-1,-1):"orange", (-1,-1,0):"orange", (-1,-1,1):"orange"
+    }
+    cubeFront = {
+        (-1,1,1): "green", (0,1,1): "green", (1,1,1): "green",
+        (-1,0,1): "green", (0,0,1): "green", (1,0,1): "green",
+        (-1,-1,1):"green", (0,-1,1):"green", (1,-1,1):"green"
+    }
+    cubeRight = {
+        (1,1,1): "red", (1,1,0): "red", (1,1,-1): "red",
+        (1,0,1): "red", (1,0,0): "red", (1,0,-1): "red",
+        (1,-1,1):"red", (1,-1,0):"red", (1,-1,-1):"red"
+    }
+    cubeOpposite = {
+        (1,1,-1): "blue", (0,1,-1): "blue", (-1,1,-1): "blue",
+        (1,0,-1): "blue", (0,0,-1): "blue", (-1,0,-1): "blue",
+        (1,-1,-1):"blue", (0,-1,-1):"blue", (-1,-1,-1):"blue"
+    }
+    cubeBottom = {
+        (-1,-1,1): "white", (0,-1,1): "white", (1,-1,1): "white",
+        (-1,-1,0): "white", (0,-1,0): "white", (1,-1,0): "white",
+        (-1,-1,-1):"white", (0,-1,-1):"white", (1,-1,-1):"white"
+    }
+    cube = {
+                            (0,1,0): cubeTop,
+        (-1,0,0): cubeLeft, (0,0,1): cubeFront, (1,0,0): cubeRight, (0,0,-1): cubeOpposite,
+                            (0,-1,0): cubeBottom
+    }
+
+
+    input("enter something to close")
