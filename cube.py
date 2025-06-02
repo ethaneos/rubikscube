@@ -15,30 +15,32 @@ colour = {
 }
 
 class Part:
-    def __init__(self, location: list, colours: str):
+    parts = {}
+    def __init__(self, location: list):
         self.init_loc = location
-        self.colours = colours
-        self.self = compound(createPart())
+        self.part = self.initialisePart(location)
+        Part.parts[location] = self
+
+    def createSide(self, partLoc, sideLoc, colour_of_side):
+        return box(pos=vec(partLoc[0]*1.1+sizeOfPart*sideLoc[0]/2, partLoc[1]*1.1+sizeOfPart*sideLoc[1]/2, partLoc[2]*1.1+sizeOfPart*sideLoc[2]/2), 
+                length=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[0]), height=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[1]), width=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[2]), 
+                color=colour[colour_of_side])
+
+    def initialisePart(self, location):
+        part = []
+        for axis in range(3):
+            for side in [-1,1]:
+                sideLoc = [0,0,0]
+                sideLoc[axis] = side
+                try:
+                    colour_of_side = cube[tuple(sideLoc)][location]
+                except KeyError:
+                    colour_of_side = "black"
+                part.append(self.createSide(location, sideLoc, colour_of_side))
+        return compound(part)
 
     def rotate(self, rotation: list):
         pass
-
-
-def createSide(partLoc, sideLoc, colour_of_side):
-    side = box(pos=vec(partLoc[0]*1.1+sizeOfPart*sideLoc[0]/2, partLoc[1]*1.1+sizeOfPart*sideLoc[1]/2, partLoc[2]*1.1+sizeOfPart*sideLoc[2]/2), 
-               length=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[0]), height=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[1]), width=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[2]), 
-               color=colour[colour_of_side])
-
-def initialisePart(location):
-    for axis in range(3):
-        for side in [-1,1]:
-            sideLoc = [0,0,0]
-            sideLoc[axis] = side
-            try:
-                colour_of_side = cube[tuple(sideLoc)][location]
-            except KeyError:
-                colour_of_side = "black"
-            createSide(location, sideLoc, colour_of_side)
 
 if __name__ == "__main__":
     cubeTop = {
@@ -85,6 +87,6 @@ if __name__ == "__main__":
                 if location == (0,0,0):
                     continue
                 else:
-                    initialisePart(location)
+                    part = Part(location)
     
     input("enter something to close")
