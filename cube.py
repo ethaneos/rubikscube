@@ -39,8 +39,15 @@ class Part:
                 part.append(self.createSide(location, sideLoc, colour_of_side))
         return compound(part)
 
-    def rotate(self, rotation: list):
-        pass
+    @classmethod
+    def rotateSide(cls, face: list, rotation: int):
+        for i in range(len(face)):
+            if face[i] != 0:
+                face_info = {"axis": i, "face": face[i]}
+                break
+        for location in cls.parts.keys():
+            if location[face_info["axis"]] == face_info["face"]:
+                pass
 
 if __name__ == "__main__":
     cubeTop = {
