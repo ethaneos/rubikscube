@@ -1,5 +1,5 @@
 from vpython import *
-sizeOfPart = 1
+sizeOfPart = 0.9
 
 colour = {
     "white": vec(1,1,1),
@@ -22,7 +22,7 @@ class Part:
         Part.parts[location] = self
 
     def createSide(self, partLoc, sideLoc, colour_of_side):
-        return box(pos=vec(partLoc[0]*1.1+sizeOfPart*sideLoc[0]/2, partLoc[1]*1.1+sizeOfPart*sideLoc[1]/2, partLoc[2]*1.1+sizeOfPart*sideLoc[2]/2), 
+        return box(pos=vec(partLoc[0]+sizeOfPart*sideLoc[0]/2, partLoc[1]+sizeOfPart*sideLoc[1]/2, partLoc[2]+sizeOfPart*sideLoc[2]/2), 
                 length=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[0]), height=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[1]), width=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[2]), 
                 color=colour[colour_of_side])
 
@@ -33,21 +33,89 @@ class Part:
                 sideLoc = [0,0,0]
                 sideLoc[axis] = side
                 try:
-                    colour_of_side = cube[tuple(sideLoc)][location]
+                    colourOfSide = cube[tuple(sideLoc)][location]
+                    part.append(self.createSide(location, sideLoc, colourOfSide))
                 except KeyError:
-                    colour_of_side = "black"
-                part.append(self.createSide(location, sideLoc, colour_of_side))
+                    # colourOfSide = "black"
+                    pass
         return compound(part)
+
+    @classmethod
+    def movesTranslate(cls, moves: str):
+        moveList = moves.split(" ")
+        for move in moveList:
+            cls.moveTranslate(move)
+
+    @classmethod
+    def moveTranslate(cls, move: str):
+        moveParts = list(move)
+        match moveParts[0]:
+            case "U":
+                face = [0,1,0]
+            case "D":
+                face = [0,-1,0]
+            case "R":
+                face = [1,0,0]
+            case "L":
+                face = [-1,0,0]
+            case "F":
+                face = [0,0,1]
+            case "B":
+                face = [0,0,-1]
+        
+        rotation = 1
+        if len(moveParts) > 1:
+            match moveParts[1]:
+                case "2":
+                    rotation = 2
+                case "'":
+                    rotation = -1
+        
+        cls.rotateSide(face, rotation)
+
 
     @classmethod
     def rotateSide(cls, face: list, rotation: int):
         for i in range(len(face)):
             if face[i] != 0:
-                face_info = {"axis": i, "face": face[i]}
+                faceInfo = {"axis": i, "face": face[i]}
                 break
+        forRoteParts = []
+        newPartDict = {}
         for location in cls.parts.keys():
-            if location[face_info["axis"]] == face_info["face"]:
-                pass
+            if location[faceInfo["axis"]] == faceInfo["face"]:
+                forRoteParts.append(cls.parts[location].part.clone())
+                cls.parts[location].part.visible = False
+                cls.parts[location].part.rotate(axis = vec(face[0], face[1], face[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
+                newLocation = []
+                for i in range(0,3):
+                    axis = []
+                    for j in range(0,3):
+                        if i == j:
+                            axis.append(1)
+                        else:
+                            axis.append(0)
+                    axisVec = vec(axis[0], axis[1], axis[2])
+                    newLocation.append(int(round(dot(cls.parts[location].part.pos, axisVec), 0)))
+                newPartDict[tuple(newLocation)] = cls.parts[location]
+        
+        forRoteComp = compound(forRoteParts)
+        Part.animateRotate(forRoteComp, vec(face[0], face[1], face[2]), -1 * (pi / 2) * rotation, 20)
+        
+        for location in cls.parts.keys():
+            if location[faceInfo["axis"]] == faceInfo["face"]:
+                cls.parts[location].part.visible = True
+
+        forRoteComp.visible = False
+        cls.parts.update(newPartDict)
+    
+    @staticmethod
+    def animateRotate(obj, axis, angle, ticks):
+        for i in range(0,ticks):    
+            obj.rotate(axis=axis, angle=angle/ticks, origin=vec(0, 0, 0))
+            rate(60)
+    
+        
 
 if __name__ == "__main__":
     cubeTop = {
@@ -56,9 +124,9 @@ if __name__ == "__main__":
         (-1,1,1): "yellow", (0,1,1): "yellow", (1,1,1): "yellow"
     }
     cubeLeft = {
-        (-1,1,-1): "orange", (-1,1,0): "orange", (-1,1,1): "orange",
-        (-1,0,-1): "orange", (-1,0,0): "orange", (-1,0,1): "orange",
-        (-1,-1,-1):"orange", (-1,-1,0):"orange", (-1,-1,1):"orange"
+        (-1,1,-1): "red", (-1,1,0): "red", (-1,1,1): "red",
+        (-1,0,-1): "red", (-1,0,0): "red", (-1,0,1): "red",
+        (-1,-1,-1):"red", (-1,-1,0):"red", (-1,-1,1):"red"
     }
     cubeFront = {
         (-1,1,1): "green", (0,1,1): "green", (1,1,1): "green",
@@ -66,9 +134,9 @@ if __name__ == "__main__":
         (-1,-1,1):"green", (0,-1,1):"green", (1,-1,1):"green"
     }
     cubeRight = {
-        (1,1,1): "red", (1,1,0): "red", (1,1,-1): "red",
-        (1,0,1): "red", (1,0,0): "red", (1,0,-1): "red",
-        (1,-1,1):"red", (1,-1,0):"red", (1,-1,-1):"red"
+        (1,1,1): "orange", (1,1,0): "orange", (1,1,-1): "orange",
+        (1,0,1): "orange", (1,0,0): "orange", (1,0,-1): "orange",
+        (1,-1,1):"orange", (1,-1,0):"orange", (1,-1,-1):"orange"
     }
     cubeOpposite = {
         (1,1,-1): "blue", (0,1,-1): "blue", (-1,1,-1): "blue",
@@ -95,5 +163,7 @@ if __name__ == "__main__":
                     continue
                 else:
                     part = Part(location)
+    
+    Part.movesTranslate("R U R' U R U2 R'")
     
     input("enter something to close")
