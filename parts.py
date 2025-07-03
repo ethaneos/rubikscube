@@ -36,9 +36,9 @@ class Part:
                 sideLoc[axis] = side
                 try:
                     colourOfSide = cube[tuple(sideLoc)][location]
-                    part.append(self.createSide(location, sideLoc, colourOfSide))
                 except KeyError:
                     colourOfSide = "black"
+                part.append(self.createSide(location, sideLoc, colourOfSide))
         return part
 
     @classmethod
