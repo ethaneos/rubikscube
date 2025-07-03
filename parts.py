@@ -38,8 +38,7 @@ class Part:
                     colourOfSide = cube[tuple(sideLoc)][location]
                     part.append(self.createSide(location, sideLoc, colourOfSide))
                 except KeyError:
-                    # colourOfSide = "black"
-                    pass
+                    colourOfSide = "black"
         return part
 
     @classmethod
