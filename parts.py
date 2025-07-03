@@ -1,5 +1,4 @@
 from vpython import *
-sizeOfPart = 0.9
 
 colour = {
     "white": vec(1,1,1),
@@ -15,15 +14,18 @@ colour = {
 }
 
 class Part:
+    __sizeOfPart = 0.9
     parts = {}
     def __init__(self, location: list):
         self.init_loc = location
         self.part = self.initialisePart(location)
+        self.location = vec(location[0], location[1], location[2])
         Part.parts[location] = self
 
     def createSide(self, partLoc, sideLoc, colour_of_side):
-        return box(pos=vec(partLoc[0]+sizeOfPart*sideLoc[0]/2, partLoc[1]+sizeOfPart*sideLoc[1]/2, partLoc[2]+sizeOfPart*sideLoc[2]/2), 
-                length=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[0]), height=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[1]), width=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[2]), 
+        size = Part.__sizeOfPart
+        return box(pos=vec(partLoc[0]+size*sideLoc[0]/2, partLoc[1]+size*sideLoc[1]/2, partLoc[2]+size*sideLoc[2]/2), 
+                length=size-size*49/50*abs(sideLoc[0]), height=size-size*49/50*abs(sideLoc[1]), width=size-size*49/50*abs(sideLoc[2]), 
                 color=colour[colour_of_side])
 
     def initialisePart(self, location):
@@ -38,7 +40,7 @@ class Part:
                 except KeyError:
                     # colourOfSide = "black"
                     pass
-        return compound(part)
+        return part
 
     @classmethod
     def movesTranslate(cls, moves: str):
@@ -84,9 +86,11 @@ class Part:
         newPartDict = {}
         for location in cls.parts.keys():
             if location[faceInfo["axis"]] == faceInfo["face"]:
-                forRoteParts.append(cls.parts[location].part.clone())
-                cls.parts[location].part.visible = False
-                cls.parts[location].part.rotate(axis = vec(face[0], face[1], face[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
+                for i in range(len(cls.parts[location].part)):
+                    forRoteParts.append(cls.parts[location].part[i].clone())
+                    cls.parts[location].part[i].visible = False
+                    cls.parts[location].part[i].rotate(axis = vec(face[0], face[1], face[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
+                cls.parts[location].location = rotate(cls.parts[location].location, axis = vec(face[0], face[1], face[2]), angle = -1 * (pi / 2) * rotation)
                 newLocation = []
                 for i in range(0,3):
                     axis = []
@@ -96,7 +100,8 @@ class Part:
                         else:
                             axis.append(0)
                     axisVec = vec(axis[0], axis[1], axis[2])
-                    newLocation.append(int(round(dot(cls.parts[location].part.pos, axisVec), 0)))
+                    newLocation.append(int(round(dot(cls.parts[location].location, axisVec), 0)))
+                cls.parts[location].location = vec(newLocation[0], newLocation[1], newLocation[2])
                 newPartDict[tuple(newLocation)] = cls.parts[location]
         
         forRoteComp = compound(forRoteParts)
@@ -104,7 +109,8 @@ class Part:
         
         for location in cls.parts.keys():
             if location[faceInfo["axis"]] == faceInfo["face"]:
-                cls.parts[location].part.visible = True
+                for i in range(len(cls.parts[location].part)):
+                    cls.parts[location].part[i].visible = True
 
         forRoteComp.visible = False
         cls.parts.update(newPartDict)
