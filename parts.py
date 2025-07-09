@@ -177,6 +177,6 @@ if __name__ == "__main__":
                 else:
                     part = Part(location)
     
-    Part.movesTranslate("M")
+    Part.movesTranslate("M2 U2 M2")
     
     input("enter something to close")
