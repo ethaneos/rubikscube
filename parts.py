@@ -1,5 +1,4 @@
 from vpython import *
-sizeOfPart = 0.9
 
 colour = {
     "white": vec(1,1,1),
@@ -15,15 +14,18 @@ colour = {
 }
 
 class Part:
+    __sizeOfPart = 0.9
     parts = {}
     def __init__(self, location: list):
         self.init_loc = location
         self.part = self.initialisePart(location)
+        self.location = vec(location[0], location[1], location[2])
         Part.parts[location] = self
 
     def createSide(self, partLoc, sideLoc, colour_of_side):
-        return box(pos=vec(partLoc[0]+sizeOfPart*sideLoc[0]/2, partLoc[1]+sizeOfPart*sideLoc[1]/2, partLoc[2]+sizeOfPart*sideLoc[2]/2), 
-                length=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[0]), height=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[1]), width=sizeOfPart-sizeOfPart*49/50*abs(sideLoc[2]), 
+        size = Part.__sizeOfPart
+        return box(pos=vec(partLoc[0]+size*sideLoc[0]/2, partLoc[1]+size*sideLoc[1]/2, partLoc[2]+size*sideLoc[2]/2), 
+                length=size-size*49/50*abs(sideLoc[0]), height=size-size*49/50*abs(sideLoc[1]), width=size-size*49/50*abs(sideLoc[2]), 
                 color=colour[colour_of_side])
 
     def initialisePart(self, location):
@@ -34,11 +36,10 @@ class Part:
                 sideLoc[axis] = side
                 try:
                     colourOfSide = cube[tuple(sideLoc)][location]
-                    part.append(self.createSide(location, sideLoc, colourOfSide))
                 except KeyError:
-                    # colourOfSide = "black"
-                    pass
-        return compound(part)
+                    colourOfSide = "black"
+                part.append(self.createSide(location, sideLoc, colourOfSide))
+        return part
 
     @classmethod
     def movesTranslate(cls, moves: str):
@@ -51,17 +52,26 @@ class Part:
         moveParts = list(move)
         match moveParts[0]:
             case "U":
-                face = [0,1,0]
+                cubeAxis = [0,1,0]
+                layer = 1
             case "D":
-                face = [0,-1,0]
+                cubeAxis = [0,-1,0]
+                layer = -1
             case "R":
-                face = [1,0,0]
+                cubeAxis = [1,0,0]
+                layer = 1
             case "L":
-                face = [-1,0,0]
+                cubeAxis = [-1,0,0]
+                layer = -1
             case "F":
-                face = [0,0,1]
+                cubeAxis = [0,0,1]
+                layer = 1
             case "B":
-                face = [0,0,-1]
+                cubeAxis = [0,0,-1]
+                layer = -1
+            case "M":
+                cubeAxis = [-1,0,0]
+                layer = 0
         
         rotation = 1
         if len(moveParts) > 1:
@@ -71,22 +81,23 @@ class Part:
                 case "'":
                     rotation = -1
         
-        cls.rotateSide(face, rotation)
+        cls.rotateSide(cubeAxis, layer, rotation)
 
 
     @classmethod
-    def rotateSide(cls, face: list, rotation: int):
-        for i in range(len(face)):
-            if face[i] != 0:
-                faceInfo = {"axis": i, "face": face[i]}
-                break
+    def rotateSide(cls, cubeAxis: list, layer: int, rotation: int):
+        for i in range(len(cubeAxis)):
+            if cubeAxis[i] != 0:
+                common = i
         forRoteParts = []
         newPartDict = {}
         for location in cls.parts.keys():
-            if location[faceInfo["axis"]] == faceInfo["face"]:
-                forRoteParts.append(cls.parts[location].part.clone())
-                cls.parts[location].part.visible = False
-                cls.parts[location].part.rotate(axis = vec(face[0], face[1], face[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
+            if location[common] == layer:
+                for i in range(len(cls.parts[location].part)):
+                    forRoteParts.append(cls.parts[location].part[i].clone())
+                    cls.parts[location].part[i].visible = False
+                    cls.parts[location].part[i].rotate(axis = vec(cubeAxis[0], cubeAxis[1], cubeAxis[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
+                cls.parts[location].location = rotate(cls.parts[location].location, axis = vec(cubeAxis[0], cubeAxis[1], cubeAxis[2]), angle = -1 * (pi / 2) * rotation)
                 newLocation = []
                 for i in range(0,3):
                     axis = []
@@ -96,15 +107,17 @@ class Part:
                         else:
                             axis.append(0)
                     axisVec = vec(axis[0], axis[1], axis[2])
-                    newLocation.append(int(round(dot(cls.parts[location].part.pos, axisVec), 0)))
+                    newLocation.append(int(round(dot(cls.parts[location].location, axisVec), 0)))
+                cls.parts[location].location = vec(newLocation[0], newLocation[1], newLocation[2])
                 newPartDict[tuple(newLocation)] = cls.parts[location]
         
         forRoteComp = compound(forRoteParts)
-        Part.animateRotate(forRoteComp, vec(face[0], face[1], face[2]), -1 * (pi / 2) * rotation, 20)
+        Part.animateRotate(forRoteComp, vec(cubeAxis[0], cubeAxis[1], cubeAxis[2]), -1 * (pi / 2) * rotation, 20)
         
         for location in cls.parts.keys():
-            if location[faceInfo["axis"]] == faceInfo["face"]:
-                cls.parts[location].part.visible = True
+            if location[common] == layer:
+                for i in range(len(cls.parts[location].part)):
+                    cls.parts[location].part[i].visible = True
 
         forRoteComp.visible = False
         cls.parts.update(newPartDict)
@@ -164,6 +177,6 @@ if __name__ == "__main__":
                 else:
                     part = Part(location)
     
-    Part.movesTranslate("R U R' U R U2 R'")
+    Part.movesTranslate("M")
     
     input("enter something to close")
