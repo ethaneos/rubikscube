@@ -16,9 +16,9 @@ colour = {
 class Part:
     __sizeOfPart = 0.9
     parts = {}
-    def __init__(self, location: list):
+    def __init__(self, location: list, cube):
         self.init_loc = location
-        self.part = self.initialisePart(location)
+        self.part = self.initialisePart(location, cube)
         self.location = vec(location[0], location[1], location[2])
         Part.parts[location] = self
 
@@ -28,7 +28,7 @@ class Part:
                 length=size-size*49/50*abs(sideLoc[0]), height=size-size*49/50*abs(sideLoc[1]), width=size-size*49/50*abs(sideLoc[2]), 
                 color=colour[colour_of_side])
 
-    def initialisePart(self, location):
+    def initialisePart(self, location, cube):
         part = []
         for axis in range(3):
             for side in [-1,1]:
@@ -127,6 +127,18 @@ class Part:
         for i in range(0,ticks):    
             obj.rotate(axis=axis, angle=angle/ticks, origin=vec(0, 0, 0))
             rate(60)
+
+    @staticmethod
+    def initialise(cube):
+        new_scene = canvas(background = color.white)
+        for x in range(-1,2):
+            for y in range(-1,2):
+                for z in range(-1,2):
+                    location = (x,y,z)
+                    if location == (0,0,0):
+                        continue
+                    else:
+                        part = Part(location, cube)
     
         
 
@@ -167,16 +179,7 @@ if __name__ == "__main__":
                             (0,-1,0): cubeBottom
     }
 
-    new_scene = canvas(background = color.white)
-    for x in range(-1,2):
-        for y in range(-1,2):
-            for z in range(-1,2):
-                location = (x,y,z)
-                if location == (0,0,0):
-                    continue
-                else:
-                    part = Part(location)
-    
+    Part.initialise(cube)
     Part.movesTranslate("M2 U2 M2")
     
     input("enter something to close")
