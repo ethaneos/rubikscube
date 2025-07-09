@@ -52,25 +52,25 @@ class Part:
         moveParts = list(move)
         match moveParts[0]:
             case "U":
-                axis = [0,1,0]
+                cubeAxis = [0,1,0]
                 layer = 1
             case "D":
-                axis = [0,-1,0]
+                cubeAxis = [0,-1,0]
                 layer = -1
             case "R":
-                axis = [1,0,0]
+                cubeAxis = [1,0,0]
                 layer = 1
             case "L":
-                axis = [-1,0,0]
+                cubeAxis = [-1,0,0]
                 layer = -1
             case "F":
-                axis = [0,0,1]
+                cubeAxis = [0,0,1]
                 layer = 1
             case "B":
-                axis = [0,0,-1]
+                cubeAxis = [0,0,-1]
                 layer = -1
             case "M":
-                axis = [-1,0,0]
+                cubeAxis = [-1,0,0]
                 layer = 0
         
         rotation = 1
@@ -81,16 +81,14 @@ class Part:
                 case "'":
                     rotation = -1
         
-        cls.rotateSide(axis, layer, rotation)
+        cls.rotateSide(cubeAxis, layer, rotation)
 
 
     @classmethod
-    def rotateSide(cls, axis: list, layer: int, rotation: int):
-        for i in range(len(axis)):
-            if axis[i] != 0:
+    def rotateSide(cls, cubeAxis: list, layer: int, rotation: int):
+        for i in range(len(cubeAxis)):
+            if cubeAxis[i] != 0:
                 common = i
-        print(common)
-        print(axis)
         forRoteParts = []
         newPartDict = {}
         for location in cls.parts.keys():
@@ -98,8 +96,8 @@ class Part:
                 for i in range(len(cls.parts[location].part)):
                     forRoteParts.append(cls.parts[location].part[i].clone())
                     cls.parts[location].part[i].visible = False
-                    cls.parts[location].part[i].rotate(axis = vec(axis[0], axis[1], axis[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
-                cls.parts[location].location = rotate(cls.parts[location].location, axis = vec(axis[0], axis[1], axis[2]), angle = -1 * (pi / 2) * rotation)
+                    cls.parts[location].part[i].rotate(axis = vec(cubeAxis[0], cubeAxis[1], cubeAxis[2]), angle = -1 * (pi / 2) * rotation, origin = vec(0,0,0))
+                cls.parts[location].location = rotate(cls.parts[location].location, axis = vec(cubeAxis[0], cubeAxis[1], cubeAxis[2]), angle = -1 * (pi / 2) * rotation)
                 newLocation = []
                 for i in range(0,3):
                     axis = []
@@ -114,7 +112,7 @@ class Part:
                 newPartDict[tuple(newLocation)] = cls.parts[location]
         
         forRoteComp = compound(forRoteParts)
-        Part.animateRotate(forRoteComp, vec(axis[0], axis[1], axis[2]), -1 * (pi / 2) * rotation, 20)
+        Part.animateRotate(forRoteComp, vec(cubeAxis[0], cubeAxis[1], cubeAxis[2]), -1 * (pi / 2) * rotation, 20)
         
         for location in cls.parts.keys():
             if location[common] == layer:
@@ -179,6 +177,6 @@ if __name__ == "__main__":
                 else:
                     part = Part(location)
     
-    Part.movesTranslate("U")
+    Part.movesTranslate("M")
     
     input("enter something to close")
