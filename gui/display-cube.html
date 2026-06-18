@@ -235,7 +235,7 @@ function executeMove(moveName, onDone) {
       c.group.position.x = Math.round(c.group.position.x / GAP) * GAP;
       c.group.position.y = Math.round(c.group.position.y / GAP) * GAP;
       c.group.position.z = Math.round(c.group.position.z / GAP) * GAP;
-      // Snap rotation matrix — every valid cubie orientation has only -1, 0, 1
+      // Snap rotation matrix - every valid cubie orientation has only -1, 0, 1
       // in its matrix elements. Rounding kills accumulated floating-point error.
       const m = c.group.matrix.elements;
       for (let i = 0; i < 16; i++) m[i] = Math.round(m[i]);
