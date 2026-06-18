@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Rubik's Cube</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #08080c;
+    overflow: hidden;
+  }
+
+  #canvas-wrap {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+  #canvas-wrap canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  #hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Courier New', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    color: #33334a;
+    pointer-events: none;
+    transition: opacity 1s;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div id="canvas-wrap">
+  <div id="hint">U D F B L R &nbsp;·&nbsp; SHIFT = COUNTER-CLOCKWISE &nbsp;·&nbsp; DRAG TO ORBIT</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const COLORS = {
+  U: 0xf0f0f0, D: 0xf5d400, F: 0xe63020,
+  B: 0xff8c00, L: 0x2d6efd, R: 0x1db954,
+};
+const FACE_NAMES = ['U','D','F','B','L','R'];
+
+//  SCENE 
+const wrap = document.getElementById('canvas-wrap');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x08080c);
+wrap.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(5, 4.2, 6);
+camera.lookAt(0, 0, 0);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(6, 10, 8);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x6677ff, 0.25);
+fill.position.set(-5, -3, -5);
+scene.add(fill);
+
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener('resize', resize);
+
+//  ORBIT 
+const cubeRoot = new THREE.Group();
+scene.add(cubeRoot);
+
+let isDragging = false, prevMouse = { x: 0, y: 0 };
+const spherical = new THREE.Spherical().setFromVector3(camera.position);
+
+wrap.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+wrap.addEventListener('touchstart', e => { isDragging = true; const t = e.touches[0]; prevMouse = { x: t.clientX, y: t.clientY }; }, { passive: true });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('touchend', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  spherical.theta -= (e.clientX - prevMouse.x) * 0.008;
+  spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + (e.clientY - prevMouse.y) * 0.008));
+  prevMouse = { x: e.clientX, y: e.clientY };
+  camera.position.setFromSpherical(spherical);
+  camera.lookAt(0, 0, 0);
+});
+window.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  const t = e.touches[0];
+  spherical.theta -= (t.clientX - prevMouse.x) * 0.008;
+  spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + (t.clientY - prevMouse.y) * 0.008));
+  prevMouse = { x: t.clientX, y: t.clientY };
+  camera.position.setFromSpherical(spherical);
+  camera.lookAt(0, 0, 0);
+}, { passive: true });
+wrap.addEventListener('wheel', e => {
+  spherical.radius = Math.max(4, Math.min(15, spherical.radius + e.deltaY * 0.01));
+  camera.position.setFromSpherical(spherical);
+  camera.lookAt(0, 0, 0);
+}, { passive: true });
+
+//  CUBIES 
+const GAP = 1.0;
+const CUBIE_SIZE = 0.92;
+const STICKER_OFFSET = 0.461;
+const STICKER_SIZE = 0.82;
+
+let cubies = [];
+
+function makeCubie(x, y, z) {
+  const group = new THREE.Group();
+  group.position.set(x * GAP, y * GAP, z * GAP);
+
+  group.add(new THREE.Mesh(
+    new THREE.BoxGeometry(CUBIE_SIZE, CUBIE_SIZE, CUBIE_SIZE),
+    new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 0.8 })
+  ));
+
+  const faceConfigs = [
+    { face: 'U', rx: -Math.PI/2, ry: 0, rz: 0, ox: 0, oy: STICKER_OFFSET, oz: 0, cond: y === 1 },
+    { face: 'D', rx:  Math.PI/2, ry: 0, rz: 0, ox: 0, oy:-STICKER_OFFSET, oz: 0, cond: y ===-1 },
+    { face: 'F', rx: 0, ry: 0, rz: 0,            ox: 0, oy: 0, oz: STICKER_OFFSET, cond: z === 1 },
+    { face: 'B', rx: 0, ry: Math.PI, rz: 0,       ox: 0, oy: 0, oz:-STICKER_OFFSET, cond: z ===-1 },
+    { face: 'L', rx: 0, ry:-Math.PI/2, rz: 0,     ox:-STICKER_OFFSET, oy: 0, oz: 0, cond: x ===-1 },
+    { face: 'R', rx: 0, ry: Math.PI/2, rz: 0,     ox: STICKER_OFFSET, oy: 0, oz: 0, cond: x === 1 },
+  ];
+
+  for (const fc of faceConfigs) {
+    if (!fc.cond) continue;
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(STICKER_SIZE, STICKER_SIZE),
+      new THREE.MeshStandardMaterial({ color: COLORS[fc.face], roughness: 0.35 })
+    );
+    mesh.rotation.set(fc.rx, fc.ry, fc.rz);
+    mesh.position.set(fc.ox, fc.oy, fc.oz);
+    group.add(mesh);
+  }
+
+  return { group };
+}
+
+function buildCube() {
+  cubies.forEach(c => cubeRoot.remove(c.group));
+  cubies = [];
+  for (let x = -1; x <= 1; x++)
+    for (let y = -1; y <= 1; y++)
+      for (let z = -1; z <= 1; z++) {
+        const c = makeCubie(x, y, z);
+        cubeRoot.add(c.group);
+        cubies.push(c);
+      }
+}
+buildCube();
+
+//  LOGICAL STATE 
+let logicCube = {};
+function initLogic() {
+  FACE_NAMES.forEach(f => { logicCube[f] = Array(9).fill(f); });
+}
+initLogic();
+
+//  ANIMATION QUEUE 
+let animQueue = [];
+let isAnimating = false;
+const ANIM_MS = 160;
+
+function getFaceSelection(face, dir) {
+  const CW = -Math.PI / 2;
+  const configs = {
+    U: { axis: new THREE.Vector3(0,1,0),  select: c => Math.round(c.group.position.y / GAP) === 1  },
+    D: { axis: new THREE.Vector3(0,-1,0), select: c => Math.round(c.group.position.y / GAP) === -1 },
+    F: { axis: new THREE.Vector3(0,0,1),  select: c => Math.round(c.group.position.z / GAP) === 1  },
+    B: { axis: new THREE.Vector3(0,0,-1), select: c => Math.round(c.group.position.z / GAP) === -1 },
+    L: { axis: new THREE.Vector3(-1,0,0), select: c => Math.round(c.group.position.x / GAP) === -1 },
+    R: { axis: new THREE.Vector3(1,0,0),  select: c => Math.round(c.group.position.x / GAP) === 1  },
+  };
+  const cfg = configs[face];
+  return { selected: cubies.filter(cfg.select), axis: cfg.axis, angle: CW * dir };
+}
+
+function queueMove(move) {
+  animQueue.push(move);
+  if (!isAnimating) processQueue();
+}
+
+function processQueue() {
+  if (!animQueue.length) { isAnimating = false; return; }
+  isAnimating = true;
+  const move = animQueue.shift();
+  executeMove(move, () => processQueue());
+}
+
+function executeMove(moveName, onDone) {
+  const base = moveName.replace(/['2]/g, '');
+  const isPrime = moveName.includes("'");
+  const isDouble = moveName.includes('2');
+  const dir = isDouble ? 2 : isPrime ? -1 : 1;
+
+  applyLogicMove(moveName);
+
+  const { selected, axis, angle } = getFaceSelection(base, dir);
+  const pivot = new THREE.Group();
+  cubeRoot.add(pivot);
+  selected.forEach(c => { cubeRoot.remove(c.group); pivot.add(c.group); });
+
+  const duration = isDouble ? ANIM_MS * 1.6 : ANIM_MS;
+  const start = performance.now();
+
+  (function frame(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const e = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    pivot.setRotationFromAxisAngle(axis, angle * e);
+    if (t < 1) { requestAnimationFrame(frame); return; }
+    pivot.setRotationFromAxisAngle(axis, angle);
+    selected.forEach(c => {
+      pivot.remove(c.group);
+      c.group.applyMatrix4(pivot.matrix);
+      // Snap position
+      c.group.position.x = Math.round(c.group.position.x / GAP) * GAP;
+      c.group.position.y = Math.round(c.group.position.y / GAP) * GAP;
+      c.group.position.z = Math.round(c.group.position.z / GAP) * GAP;
+      // Snap rotation matrix — every valid cubie orientation has only -1, 0, 1
+      // in its matrix elements. Rounding kills accumulated floating-point error.
+      const m = c.group.matrix.elements;
+      for (let i = 0; i < 16; i++) m[i] = Math.round(m[i]);
+      c.group.matrix.decompose(c.group.position, c.group.quaternion, c.group.scale);
+      cubeRoot.add(c.group);
+    });
+    cubeRoot.remove(pivot);
+    onDone();
+  })(start);
+}
+
+//  LOGIC 
+function rotateFaceCW(f)  { const a=logicCube[f]; logicCube[f]=[a[6],a[3],a[0],a[7],a[4],a[1],a[8],a[5],a[2]]; }
+function rotateFaceCCW(f) { const a=logicCube[f]; logicCube[f]=[a[2],a[5],a[8],a[1],a[4],a[7],a[0],a[3],a[6]]; }
+function cycle(a,b,c,d) {
+  const g=g=>g.map(([f,i])=>logicCube[f][i]), s=(g,v)=>g.forEach(([f,i],k)=>logicCube[f][i]=v[k]);
+  const va=g(a),vb=g(b),vc=g(c),vd=g(d); s(b,va);s(c,vb);s(d,vc);s(a,vd);
+}
+function applyLogicMove(m) {
+  switch(m) {
+    case 'U':  rotateFaceCW('U');  cycle([['B',0],['B',1],['B',2]],[['R',0],['R',1],['R',2]],[['F',0],['F',1],['F',2]],[['L',0],['L',1],['L',2]]); break;
+    case "U'": rotateFaceCCW('U'); cycle([['L',0],['L',1],['L',2]],[['F',0],['F',1],['F',2]],[['R',0],['R',1],['R',2]],[['B',0],['B',1],['B',2]]); break;
+    case 'U2': applyLogicMove('U'); applyLogicMove('U'); return;
+    case 'D':  rotateFaceCW('D');  cycle([['F',6],['F',7],['F',8]],[['R',6],['R',7],['R',8]],[['B',6],['B',7],['B',8]],[['L',6],['L',7],['L',8]]); break;
+    case "D'": rotateFaceCCW('D'); cycle([['L',6],['L',7],['L',8]],[['B',6],['B',7],['B',8]],[['R',6],['R',7],['R',8]],[['F',6],['F',7],['F',8]]); break;
+    case 'D2': applyLogicMove('D'); applyLogicMove('D'); return;
+    case 'F':  rotateFaceCW('F');  cycle([['U',6],['U',7],['U',8]],[['R',0],['R',3],['R',6]],[['D',2],['D',1],['D',0]],[['L',8],['L',5],['L',2]]); break;
+    case "F'": rotateFaceCCW('F'); cycle([['L',2],['L',5],['L',8]],[['D',0],['D',1],['D',2]],[['R',6],['R',3],['R',0]],[['U',8],['U',7],['U',6]]); break;
+    case 'F2': applyLogicMove('F'); applyLogicMove('F'); return;
+    case 'B':  rotateFaceCW('B');  cycle([['U',2],['U',1],['U',0]],[['L',0],['L',3],['L',6]],[['D',8],['D',7],['D',6]],[['R',2],['R',5],['R',8]]); break;
+    case "B'": rotateFaceCCW('B'); cycle([['R',8],['R',5],['R',2]],[['D',6],['D',7],['D',8]],[['L',6],['L',3],['L',0]],[['U',0],['U',1],['U',2]]); break;
+    case 'B2': applyLogicMove('B'); applyLogicMove('B'); return;
+    case 'L':  rotateFaceCW('L');  cycle([['U',0],['U',3],['U',6]],[['F',0],['F',3],['F',6]],[['D',0],['D',3],['D',6]],[['B',8],['B',5],['B',2]]); break;
+    case "L'": rotateFaceCCW('L'); cycle([['B',2],['B',5],['B',8]],[['D',6],['D',3],['D',0]],[['F',6],['F',3],['F',0]],[['U',6],['U',3],['U',0]]); break;
+    case 'L2': applyLogicMove('L'); applyLogicMove('L'); return;
+    case 'R':  rotateFaceCW('R');  cycle([['U',8],['U',5],['U',2]],[['B',0],['B',3],['B',6]],[['D',8],['D',5],['D',2]],[['F',8],['F',5],['F',2]]); break;
+    case "R'": rotateFaceCCW('R'); cycle([['F',2],['F',5],['F',8]],[['D',2],['D',5],['D',8]],[['B',6],['B',3],['B',0]],[['U',2],['U',5],['U',8]]); break;
+    case 'R2': applyLogicMove('R'); applyLogicMove('R'); return;
+  }
+}
+
+//  KEYBOARD 
+document.addEventListener('keydown', e => {
+  const map = { u:'U', d:'D', f:'F', b:'B', l:'L', r:'R' };
+  const k = map[e.key.toLowerCase()];
+  if (!k) return;
+  e.preventDefault();
+  queueMove(e.shiftKey ? k + "'" : k);
+});
+
+//  HINT FADE 
+setTimeout(() => { document.getElementById('hint').style.opacity = '0'; }, 5000);
+
+//  RENDER LOOP 
+(function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>
