@@ -18,13 +18,12 @@ U_CYCLES = [
 
 R_CYCLES = [
     (9, 11, 17, 15), (10, 14, 16, 12),          # R face
-    (2, 18, 27, 47), (5, 21, 30, 50), (8, 24, 33, 53),  # U->F->D->B'
-    # Note: B stickers go in reverse due to face orientation
+    (2, 20, 29, 51), (5, 23, 32, 48), (8, 26, 35, 45),  # U->F->D->B
 ]
 
 F_CYCLES = [
     (18, 20, 26, 24), (19, 23, 25, 21),          # F face
-    (6, 9, 27, 44), (7, 12, 28, 41), (8, 15, 29, 38),   # U->R->D->L
+    (6, 9, 29, 44), (7, 12, 28, 41), (8, 15, 27, 38),   # U->R->D->L
 ]
 
 class BaseSolver:
@@ -70,8 +69,9 @@ class BaseSolver:
         cube_list = list(self.cube)
         # U
         for i in range(3):
-            message += " "*10
+            message += " "*22
             for j in range(3):
+                message += str(i*3+j) + ": "
                 message += str(cube_list[i*3+j])
                 message += ", "
             message += "\n"
@@ -81,6 +81,7 @@ class BaseSolver:
         for i in range(3):
             for j in (4,2,1,5):
                 for k in range(3):
+                    message += str(i*3+j*9+k) + ": "
                     message += str(cube_list[i*3+j*9+k])
                     message += ", "
                 message += " "
@@ -89,8 +90,9 @@ class BaseSolver:
 
         # D
         for i in range(3):
-            message += " "*10
+            message += " "*22
             for j in range(3):
+                message += str(i*3+j+27) + ": "
                 message += str(cube_list[i*3+j+27])
                 message += ", "
             message += "\n"
