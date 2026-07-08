@@ -69,6 +69,8 @@ class BaseSolver:
             self.cube = cube_array
         else:
             raise Exception("Solver initialised with non cube array")
+        
+        self.checks = []
     
     def apply_cycles(self, cycles):
         new = copy.copy(self.cube)
@@ -94,6 +96,44 @@ class BaseSolver:
     def apply_perm(self, state, perm):
         return bytearray(state[i] for i in perm)
 
+
+    def check(self):
+        for check in self.checks:
+            for group in check:
+                for i in range(len(group)-1):
+                    if self.cube[i] != self.cube[i+1]:
+                        return False
+        return True
+
+    def create_check(self, *cycle_pairs):
+        checks = []
+        for pair in cycle_pairs:
+            check = []
+            part_sides = []
+            cycle_two_full = []
+            for cycle_part in pair[1]:
+                for part_side in cycle_part:
+                    cycle_two_full.append(part_side)
+            for part_side in pair[0]:
+                if part_side in cycle_two_full:
+                    part_sides.append(part_side)
+            
+            for part_side in part_sides:
+                assigned = False
+                if len(check) > 0:
+                    for group in check:
+                        if group[0] // 9 == part_side // 9:
+                            group.append(part_side)
+                            assigned = True
+                            break
+                    if assigned == False:
+                        check.append([part_side])
+                else:
+                    check.append([part_side])
+                    
+
+
+ 
     def __str__(self):
         message = ""
         cube_list = list(self.cube)
