@@ -1,5 +1,7 @@
 import copy
 from cube_data import *
+from move_translator import *
+from string_iterator import *
 
 class BaseSolver:
     def __init__(self, cube_array):
@@ -21,6 +23,8 @@ class BaseSolver:
     def apply_cycles(self, cycles):
         new = copy.copy(self.curr_state)
         for cycle in cycles:
+            if len(cycle) == 1:
+                continue
             a, b, c, d = cycle
             new[b] = self.curr_state[a]
             new[c] = self.curr_state[b]
@@ -37,7 +41,7 @@ class BaseSolver:
         for check in self.checks:
             for group in check:
                 for i in range(len(group)-1):
-                    if self.curr_state[i] != self.curr_state[i+1]:
+                    if self.curr_state[group[i]] != self.curr_state[group[i+1]]:
                         return False
         return True
 
@@ -77,9 +81,35 @@ class BaseSolver:
             
             checks.append(new_check)
         self.checks += checks
-                    
-    def find_solns(self):
+
+    def reset_curr(self):
+        self.curr_state = self.init_state.copy()
+                  
+    def find_move_solns(self, *args):
+        translator = MoveTranslator()
+        iterator = StringIterator(list(args))
+        solns_found = 0
+        solns = []
+        iterator.get_now()
+        while (solns_found < 1 and iterator.get_length() < 3):
+            combination = iterator.get_next()
+            move_seq = combination.split(" ")
+
+            for move in move_seq:
+                move_cycles = translator.translate_move(move)
+                self.apply_cycles(move_cycles)
+            if self.check():
+                solns.append(combination)
+            print(move_seq)
+            print(self)
+            self.reset_curr()
+        return solns
+                
+    def find_alg_solves(self, *args):
         pass
+
+    def save_state(self):
+        self.init_state = self.curr_state
  
     def __str__(self):
         message = ""
@@ -124,8 +154,11 @@ if __name__ == "__main__":
     print(str(newSolver))
     newSolver.apply_cycles(cube_data.F_CYCLES)
     print(str(newSolver))
+    newSolver.save_state()
+
 
     newSolver.create_check([cube_data.U_CYCLES, cube_data.R_CYCLES, cube_data.M_CYCLES])
     print(newSolver.checks)
+    print(newSolver.find_move_solns("U", "F", "F'", "U'"))
 
     

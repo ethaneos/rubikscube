@@ -52,3 +52,5 @@ if __name__ == "__main__":
     t = MoveTranslator()
     print(t.translate_move("U"))
     print(t.translate_move("U'"))
+    print(t.translate_move("F"))
+    print(t.translate_move("F'"))

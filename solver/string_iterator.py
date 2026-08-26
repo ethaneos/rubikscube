@@ -1,6 +1,6 @@
 class StringIterator:
     """This class allows you to iterate through combinations of moves"""
-    
+
     def __init__(self, move_list: list) -> None:
         """Init creation function for StringIterator
 
@@ -54,6 +54,17 @@ class StringIterator:
         """
 
         return " ".join([self.move_list[i] for i in self.up_to])
+
+    def get_length(self) -> int:
+        """Gets the current length of combination being tested
+
+        Returns
+        -------
+        int
+            The current length of combination being tested
+        """
+
+        return len(self.up_to)
 
 if __name__ == "__main__":
     si = StringIterator(("A", "B", "C", "D"))
