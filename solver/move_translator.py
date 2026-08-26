@@ -2,13 +2,23 @@ from cube_data import *
 class MoveTranslator:
     def translate_move(self, move):
         cube_data = CubeData()
-        assert len(move) == 2 or len(move) == 1
-        cycles = getattr(cube_data, move.upper + "_CYCLES")
+        assert len(move) in [1,2,3]
+        cycles = getattr(cube_data, move[0].upper + "_CYCLES")
         if len(move) == 2:
             if move[1] == "2":
                 return self.multiply_cycles(cycles, 2)
             if move[1] == "'":
                 return self.multiply_cycles(cycles, 3)
+            if move[1] == "w":
+                cycles += self.translate_move(getattr(cube_data, "wide")[move[0].upper])
+                return cycles
+        elif len(move) == 3:
+            if move[1] == 'w':
+                if move[2] == "2":
+                    return self.multiply_cycles(cycles, 2)
+                if move[2] == "'":
+                    return self.multiply_cycles(cycles, 3)
+
 
     def multiply_cycles(self, cycles, factor):
         new_cycles = []
