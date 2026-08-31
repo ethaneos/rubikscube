@@ -4,7 +4,25 @@ from move_translator import *
 from string_iterator import *
 
 class BaseSolver:
-    def __init__(self, cube_array):
+    """A basic solver, one that each step of solving a cube will be based on"""
+    def __init__(self, cube_array: bytearray):
+        """Initialisation for BaseSolver
+
+        Parameters
+        ----------
+        cube_array : bytearray
+            The initial state of the cube
+
+        Raises
+        ------
+        Exception
+            The numbers in cube_array are not correct
+        Exception
+            There is not the correct number of numbers in cube_array
+        Exception
+            cube_array is not in a 6x9 shape
+        """
+
         if len(cube_array) == 54:
             count = [0]*6
             for i in cube_array:
@@ -20,7 +38,20 @@ class BaseSolver:
         
         self.checks = []
     
-    def apply_cycles(self, cycles):
+    def apply_cycles(self, cycles: list) -> bytearray:
+        """Applies a singular move (a cycle)
+
+        Parameters
+        ----------
+        cycles : list
+            The cycle to apply
+
+        Returns
+        -------
+        bytearray
+            The end state of the cube
+        """
+
         new = copy.copy(self.curr_state)
         for cycle in cycles:
             if len(cycle) == 1:
@@ -33,11 +64,32 @@ class BaseSolver:
         self.curr_state = new
         return self.curr_state
 
-    def apply_perm(self, state, perm):
-        return bytearray(state[i] for i in perm)
+    def apply_perm(self, perm: list) -> bytearray:
+        """Applies a permutation to the rubiks cube, typically used for algorithms that move many pieces simultaneously
+
+        Parameters
+        ----------
+        perm : list
+            The permutation to apply
+
+        Returns
+        -------
+        bytearray
+            The state after the permutation
+        """
+
+        return bytearray(self.curr_state[i] for i in perm)
 
 
-    def check(self):
+    def check(self) -> bool:
+        """Checks whether the state is considered "solved" for this step
+
+        Returns
+        -------
+        bool
+            Whether the checks have passed
+        """
+
         for check in self.checks:
             for group in check:
                 for i in range(len(group)-1):
@@ -45,7 +97,17 @@ class BaseSolver:
                         return False
         return True
 
-    def create_check(self, *cycle_intersects):
+    def create_check(self, *cycle_intersects) -> None:
+        """"Creates a check by looking at which cycles intersect and where, 
+        and stores every "part_side" that is on at least two of the cycles input in a list
+        which is then stored
+
+        Parameters
+        ----------
+        tuple(list) : cycle_intersects
+            The cycles to find the intersections of
+        """
+
         checks = []
         for i in range(len(cycle_intersects)):
             check = []
@@ -82,7 +144,9 @@ class BaseSolver:
             checks.append(new_check)
         self.checks += checks
 
-    def reset_curr(self):
+    def reset_curr(self) -> None:
+        """Resets the current state to the initial state"""
+
         self.curr_state = self.init_state.copy()
                   
     def find_move_solns(self, min_solns: int, max_solve_len: int, *args: str) -> list[str]:
@@ -102,6 +166,7 @@ class BaseSolver:
         list[str]
             A list of the combinations of moves that are solutions
         """
+
         translator = MoveTranslator()
         iterator = StringIterator(list(args))
         solns = []
@@ -137,10 +202,18 @@ class BaseSolver:
     def find_alg_solves(self, *args):
         pass
 
-    def save_state(self):
+    def save_state(self) -> None:
+        """Saves the current state to the initial state (meant for testing)"""
         self.init_state = self.curr_state
  
     def __str__(self):
+        """Returns a string display of the current state of the cube stored in the solver
+
+        Returns
+        -------
+        str
+            Current state
+        """
         message = ""
         cube_list = list(self.curr_state)
         # U

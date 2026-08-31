@@ -1,6 +1,21 @@
 from cube_data import *
+
 class MoveTranslator:
-    def translate_move(self, move):
+    """A class that translates move information from text to cycles"""
+    def translate_move(self, move: str) -> list:
+        """Translates most possible moves to a cycle that can be used by a solver
+
+        Parameters
+        ----------
+        move : str
+            The move to translate
+
+        Returns
+        -------
+        list
+            The corresponding cycles
+        """
+
         cube_data = CubeData()
         assert len(move) in [1,2,3]
         cycles = getattr(cube_data, move[0].upper() + "_CYCLES")
@@ -22,7 +37,22 @@ class MoveTranslator:
                     return self.multiply_cycles(cycles, 3)
 
 
-    def multiply_cycles(self, cycles, factor):
+    def multiply_cycles(self, cycles: list, factor: int) -> list:
+        """Creates cycles from an existing group of cycles corresponding to when the cycle is applied multiple times
+
+        Parameters
+        ----------
+        cycles : list
+            The cycles to multiply
+        factor : int
+            The number of times the cycle is repeates
+
+        Returns
+        -------
+        list
+            The new list of cycles
+        """
+        
         new_cycles = []
         used_faces = []
         for cycle in cycles:
@@ -38,7 +68,20 @@ class MoveTranslator:
                     used_faces += new_cycle
         return new_cycles
 
-    def cycles_to_permutation(self, cycles):
+    def cycles_to_permutation(self, cycles: list) -> list:
+        """Converts a list of cycles to a permutation (translates an set of moves into an algorithm)
+
+        Parameters
+        ----------
+        cycles : list
+            The cycles that form the permutation
+
+        Returns
+        -------
+        perm : list
+            The resultant permutation
+        """
+
         perm = list(range(54))  # start as identity: cell i comes from i
         for cycle in cycles:
             a, b, c, d = cycle

@@ -1,4 +1,6 @@
 class CubeData:
+    """Stores all the data about the rubiks cube and its data structure that is used by solvers"""
+    
     cube = bytearray([
         0,0,0, 0,0,0, 0,0,0,   # U
         1,1,1, 1,1,1, 1,1,1,   # R
