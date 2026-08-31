@@ -85,24 +85,53 @@ class BaseSolver:
     def reset_curr(self):
         self.curr_state = self.init_state.copy()
                   
-    def find_move_solns(self, *args):
+    def find_move_solns(self, min_solns: int, max_solve_len: int, *args: str) -> list[str]:
+        """Finds all non-duplicate solutions using certain moves
+
+        Parameters
+        ----------
+        min_solns : int
+            The minimum number of solutions you want
+        max_solve_len : int
+            The maximum number of moves that can be used (has priority over min_solns)
+        *args: str
+            The moves that are allowed
+
+        Returns
+        -------
+        list[str]
+            A list of the combinations of moves that are solutions
+        """
         translator = MoveTranslator()
         iterator = StringIterator(list(args))
-        solns_found = 0
         solns = []
+        p_solns = []
         iterator.get_now()
-        while (solns_found < 1 and iterator.get_length() < 3):
-            combination = iterator.get_next()
-            move_seq = combination.split(" ")
+        while (len(solns) < min_solns and iterator.get_length() <= max_solve_len):
+            while (len(p_solns) < min_solns and iterator.get_length() <= max_solve_len):
+                combination = iterator.get_next()
+                move_seq = combination.split(" ")
 
-            for move in move_seq:
-                move_cycles = translator.translate_move(move)
-                self.apply_cycles(move_cycles)
-            if self.check():
-                solns.append(combination)
-            print(move_seq)
-            print(self)
-            self.reset_curr()
+                for move in move_seq:
+                    move_cycles = translator.translate_move(move)
+                    self.apply_cycles(move_cycles)
+                if self.check():
+                    p_solns.append(combination)
+                self.reset_curr()
+
+            # Remove any "duplicates"
+            to_remove = []
+            print(p_solns)
+            for i in range(len(p_solns)-1):
+                for j in range(i+1, len(p_solns)):
+                    if p_solns[j].startswith(p_solns[i]):
+                        to_remove.append(j)
+
+            solns = []
+            for i in range(len(p_solns)):
+                if i not in to_remove: solns.append(p_solns[i])
+            p_solns = solns
+            
         return solns
                 
     def find_alg_solves(self, *args):
@@ -159,6 +188,6 @@ if __name__ == "__main__":
 
     newSolver.create_check([cube_data.U_CYCLES, cube_data.R_CYCLES, cube_data.M_CYCLES])
     print(newSolver.checks)
-    print(newSolver.find_move_solns("U", "F", "F'", "U'"))
+    print(newSolver.find_move_solns(10,5, "U", "F", "F'", "U'"))
 
     
