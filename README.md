@@ -1,6 +1,6 @@
 # Rubik's Cube Solver and Helper
 
-This program will help you solve your Rubik's cube, but not in the way that solvers traditionally do. This solver will help you actually improve your solves, finding the optimal solving sequence and comparing it with your own solution each step of the way.
+This program will help you solve your Rubik's cube, but not in the way that solvers traditionally do. This solver will help you actually improve your solves, finding the optimal solving sequence based on your selected method and comparing it with your own solution each step of the way.
 
 ## Where is the project at right now?
 
